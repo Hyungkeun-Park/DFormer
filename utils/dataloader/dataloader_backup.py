@@ -66,7 +66,7 @@ class ValPre(object):
         modal_x = normalize(modal_x, [0.48,0.48,0.48], [0.28,0.28,0.28])
         return rgb.transpose(2, 0, 1), gt, modal_x.transpose(2, 0, 1)
 
-def get_train_loader(dataset, config):
+def get_train_loader(engine, dataset,config):
     data_setting = {'rgb_root': config.rgb_root_folder,
                     'rgb_format': config.rgb_format,
                     'gt_root': config.gt_root_folder,
@@ -87,6 +87,11 @@ def get_train_loader(dataset, config):
     is_shuffle = True
     batch_size = config.batch_size
 
+    if engine.distributed:
+        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+        batch_size = config.batch_size // engine.world_size
+        is_shuffle = False
+
     train_loader = data.DataLoader(train_dataset,
                                    batch_size=batch_size,
                                    num_workers=config.num_workers,
@@ -98,7 +103,7 @@ def get_train_loader(dataset, config):
     return train_loader, train_sampler
 
 
-def get_val_loader(dataset, config):
+def get_val_loader(engine, dataset,config,gpus):
     data_setting = {'rgb_root': config.rgb_root_folder,
                     'rgb_format': config.rgb_format,
                     'gt_root': config.gt_root_folder,
@@ -118,6 +123,11 @@ def get_val_loader(dataset, config):
     val_sampler = None
     is_shuffle = False
     batch_size = 1
+
+    if engine.distributed:
+        val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset)
+        batch_size = 1
+        is_shuffle = False
 
     val_loader = data.DataLoader(val_dataset,
                                    batch_size=batch_size,

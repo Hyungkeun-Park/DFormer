@@ -230,9 +230,14 @@ def extant_file(x):
 
 
 def link_file(src, target):
-    if os.path.isdir(target) or os.path.isfile(target):
-        os.system('rm -rf {}'.format(target))
-    os.system('ln -s {} {}'.format(src, target))
+    if sys.platform.startswith("win"):
+        if os.path.isdir(target) or os.path.isfile(target):
+            os.system("rmdir /s {}".format(target))
+        os.system("mklink {} {}".format(src, target))
+    else:
+        if os.path.isdir(target) or os.path.isfile(target):
+            os.system('rm -rf {}'.format(target))
+        os.system('ln -s {} {}'.format(src, target))
 
 
 def ensure_dir(path):
